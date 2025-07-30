@@ -1,0 +1,53 @@
+{
+  "system": {
+    "satellite_id": 1,
+    "mission_name": "RustSat-Demo",
+    "max_memory_mb": 512,
+    "max_cpu_percent": 80.0,
+    "heartbeat_interval_ms": 1000,
+    "watchdog_timeout_ms": 5000
+  },
+  "network": {
+    "max_hops": 5,
+    "routing_update_interval_ms": 30000,
+    "connection_timeout_ms": 5000,
+    "retry_attempts": 3,
+    "retry_backoff_ms": 1000,
+    "mesh_discovery_interval_ms": 60000,
+    "ground_station_priority": 10
+  },
+  "security": {
+    "encryption_enabled": true,
+    "key_rotation_interval_hours": 24,
+    "max_auth_failures": 3,
+    "auth_timeout_ms": 10000,
+    "emergency_bypass_enabled": false
+  },
+  "telemetry": {
+    "collection_interval_ms": 5000,
+    "compression_enabled": true,
+    "max_buffer_size": 10000,
+    "alert_thresholds": {
+      "battery_low_percent": 20.0,
+      "temperature_high_celsius": 60.0,
+      "temperature_low_celsius": -20.0,
+      "memory_usage_percent": 90.0,
+      "signal_strength_low": 0.3
+    },
+    "data_retention_hours": 72
+  },
+  "simulation": {
+    "time_acceleration": 1.0,
+    "orbital_perturbations": true,
+    "space_weather_enabled": true,
+    "ground_station_visibility": true,
+    "realistic_delays": true
+  },
+  "logging": {
+    "level": "info",
+    "file_enabled": true,
+    "console_enabled": true,
+    "max_file_size_mb": 10,
+    "max_files": 5
+  }
+}

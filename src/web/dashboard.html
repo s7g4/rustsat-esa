@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RustSat-ESA Mission Control Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c1445 0%, #1a1a2e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            color: #00d4ff;
+        }
+        
+        .header .subtitle {
+            color: #a0a0a0;
+            margin-top: 0.5rem;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h3 {
+            color: #00d4ff;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .satellite-grid {
+            grid-column: span 2;
+        }
+        
+        .satellite-item {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #00d4ff;
+        }
+        
+        .satellite-name {
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 0.5rem;
+        }
+        
+        .satellite-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .status-operational {
+            color: #00ff88;
+        }
+        
+        .status-warning {
+            color: #ffaa00;
+        }
+        
+        .status-critical {
+            color: #ff4444;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        .metric-value {
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #00ff88);
+            transition: width 0.3s ease;
+        }
+        
+        .telemetry-chart {
+            height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #a0a0a0;
+        }
+        
+        .system-status {
+            text-align: center;
+        }
+        
+        .status-indicator {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #00ff88;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+        
+        .refresh-btn {
+            background: linear-gradient(45deg, #00d4ff, #0099cc);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .satellite-grid {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛰️ RustSat-ESA Mission Control</h1>
+        <p class="subtitle">Real-time CubeSat constellation monitoring and control</p>
+    </div>
+    
+    <div class="dashboard">
+        <div class="card satellite-grid">
+            <h3>Active Satellites</h3>
+            <div id="satellites-container">
+                <!-- Satellites will be loaded here -->
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>System Status</h3>
+            <div class="system-status">
+                <div class="status-indicator">✓</div>
+                <div class="metric">
+                    <span>System Status</span>
+                    <span class="metric-value status-operational">Operational</span>
+                </div>
+                <div class="metric">
+                    <span>Active Satellites</span>
+                    <span class="metric-value" id="active-count">3</span>
+                </div>
+                <div class="metric">
+                    <span>Ground Stations</span>
+                    <span class="metric-value">2</span>
+                </div>
+                <div class="metric">
+                    <span>Data Rate</span>
+                    <span class="metric-value">1.2 MB/s</span>
+                </div>
+                <button class="refresh-btn" onclick="refreshData()">Refresh Data</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>Telemetry Overview</h3>
+            <div class="telemetry-chart">
+                📊 Real-time telemetry visualization
+                <br><small>(Chart would be implemented with a library like Chart.js)</small>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>Ground Station Network</h3>
+            <div class="metric">
+                <span>ESA Kourou</span>
+                <span class="metric-value status-operational">Online</span>
+            </div>
+            <div class="metric">
+                <span>ESA Kiruna</span>
+                <span class="metric-value status-operational">Online</span>
+            </div>
+            <div class="metric">
+                <span>Next Pass</span>
+                <span class="metric-value">14:32 UTC</span>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>Mission Timeline</h3>
+            <div class="metric">
+                <span>Mission Day</span>
+                <span class="metric-value">127</span>
+            </div>
+            <div class="metric">
+                <span>Next Maneuver</span>
+                <span class="metric-value">2h 15m</span>
+            </div>
+            <div class="metric">
+                <span>Data Collected</span>
+                <span class="metric-value">2.4 GB</span>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>Alerts & Notifications</h3>
+            <div style="color: #00ff88; margin-bottom: 0.5rem;">✓ All systems nominal</div>
+            <div style="color: #ffaa00; margin-bottom: 0.5rem;">⚠ CubeSat-Beta: Battery at 78%</div>
+            <div style="color: #a0a0a0;">ℹ Next ground contact in 45 minutes</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadSatellites() {
+            try {
+                const response = await fetch('/api/satellites');
+                const satellites = await response.json();
+                
+                const container = document.getElementById('satellites-container');
+                container.innerHTML = '';
+                
+                satellites.forEach(sat => {
+                    const satElement = document.createElement('div');
+                    satElement.className = 'satellite-item';
+                    
+                    const batteryPercent = Math.round(sat.battery_level * 100);
+                    const signalPercent = Math.round(sat.signal_strength * 100);
+                    
+                    satElement.innerHTML = `
+                        <div class="satellite-name">${sat.name}</div>
+                        <div class="satellite-info">
+                            <div>Position: ${sat.position[0].toFixed(1)}°, ${sat.position[1].toFixed(1)}°</div>
+                            <div>Altitude: ${sat.position[2].toFixed(0)} km</div>
+                            <div>Battery: ${batteryPercent}%</div>
+                            <div>Signal: ${signalPercent}%</div>
+                            <div>Temperature: ${sat.temperature.toFixed(1)}°C</div>
+                            <div class="status-${sat.status.toLowerCase()}">${sat.status}</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${batteryPercent}%"></div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(satElement);
+                });
+                
+                document.getElementById('active-count').textContent = satellites.length;
+            } catch (error) {
+                console.error('Failed to load satellites:', error);
+            }
+        }
+        
+        async function refreshData() {
+            await loadSatellites();
+            console.log('Data refreshed at', new Date().toLocaleTimeString());
+        }
+        
+        // Load initial data
+        loadSatellites();
+        
+        // Auto-refresh every 30 seconds
+        setInterval(refreshData, 30000);
+        
+        // Add some visual flair
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.style.animation = 'fadeInUp 0.6s ease forwards';
+            });
+        });
+        
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
