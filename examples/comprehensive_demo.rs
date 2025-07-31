@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     demo_spacecan_protocol()?;
     
     // Demo 2: Mesh Network Routing
-    demo_mesh_networking()?;
+    // demo_mesh_networking()?;
     
     // Demo 3: CubeSat Mission Control
     demo_cubesat_mission_control()?;
@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     demo_telemetry_processing()?;
     
     // Demo 7: Complete Protocol Stack Integration
-    demo_integrated_protocol_stack()?;
+    //demo_integrated_protocol_stack()?;
     
     // Demo 8: Space Environment Simulation
     demo_space_simulation()?;
@@ -96,13 +96,14 @@ fn demo_mesh_networking() -> Result<(), Box<dyn std::error::Error>> {
     // Create CubeSat constellation
     for i in 1..=5 {
         let position = OrbitalPosition {
-            latitude: (i as f64 - 3.0) * 10.0,
-            longitude: (i as f64 - 3.0) * 15.0,
+            latitude: (i as f64 - 3.0) * 2.0,  // Reduced spacing to 2 degrees
+            longitude: (i as f64 - 3.0) * 3.0, // Reduced spacing to 3 degrees
             altitude: 400.0 + i as f64 * 5.0,
             velocity: (7.66, 0.0, 0.0),
         };
         
-        let node = NetworkNode::new_cubesat(i, position);
+        let mut node = NetworkNode::new_cubesat(i, position);
+        node.communication_range = 1500.0; // Increase communication range to 1500 km
         network.add_node(node);
     }
     
