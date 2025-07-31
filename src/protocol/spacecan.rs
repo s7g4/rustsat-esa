@@ -215,10 +215,17 @@ impl SpaceCANFrame {
             warn!("Checksum mismatch detected, attempting error correction");
             
             // Attempt error correction using ECC
-            if self.attempt_error_correction() {
+            let correction_result = self.attempt_error_correction();
+            if correction_result {
                 info!("Error correction successful");
                 self.checksum = Self::calculate_checksum(&self.data);
-                return Ok(true);
+                // After correction, verify checksum again
+                if self.checksum == calculated_checksum {
+                    return Ok(true);
+                } else {
+                    error!("Error correction failed to fix checksum");
+                    return Err("Uncorrectable error detected".to_string());
+                }
             } else {
                 error!("Error correction failed");
                 return Err("Uncorrectable error detected".to_string());

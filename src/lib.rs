@@ -44,6 +44,27 @@ impl RustSatProtocol {
         let mut cubesat = cubesat::CubeSatProtocol::new(1);
         cubesat.configure_mission(mission_config)?;
         self.application_layer.add_satellite(cubesat);
+
+        // Add CubeSat node to network layer for routing
+        let position1 = protocol::network::OrbitalPosition {
+            latitude: 0.0,
+            longitude: 0.0,
+            altitude: 400.0,
+            velocity: (7.66, 0.0, 0.0),
+        };
+        let node1 = protocol::network::NetworkNode::new_cubesat(1, position1);
+        self.network_layer.add_node(node1);
+
+        // Add source node with id 0 to network layer for routing
+        let position0 = protocol::network::OrbitalPosition {
+            latitude: 0.0,
+            longitude: 0.0,
+            altitude: 0.0,
+            velocity: (0.0, 0.0, 0.0),
+        };
+        let node0 = protocol::network::NetworkNode::new_cubesat(0, position0);
+        self.network_layer.add_node(node0);
+
         self.network_layer.initialize_routing()?;
         self.security_layer.initialize_keys()?;
         Ok(())

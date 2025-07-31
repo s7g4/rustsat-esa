@@ -16,7 +16,7 @@ fn test_complete_protocol_stack_integration() {
     let _simulator = SpaceSimulator::new();
     
     // Basic functionality test - just check it was created
-    println!("✓ Protocol stack components initialized successfully");
+    println!("Protocol stack components initialized successfully");
 }
 
 #[test]
@@ -35,7 +35,7 @@ fn test_spacecan_frame_lifecycle() {
     assert_eq!(decoded.data, original_data);
     assert_eq!(decoded.priority, FramePriority::High);
     
-    println!("✓ SpaceCAN frame lifecycle test passed");
+    println!("SpaceCAN frame lifecycle test passed");
 }
 
 #[test]
@@ -43,7 +43,7 @@ fn test_mesh_network_operations() {
     let network = MeshNetwork::new();
     
     // Basic network test
-    println!("✓ Mesh network initialized successfully");
+    println!("Mesh network initialized successfully");
 }
 
 #[test]
@@ -51,7 +51,7 @@ fn test_cubesat_operations() {
     let cubesat = CubeSatProtocol::new(1);
     
     // Basic cubesat test - just check it was created
-    println!("✓ CubeSat operations test passed");
+    println!("CubeSat operations test passed");
 }
 
 #[test]
@@ -64,7 +64,7 @@ fn test_security_operations() {
     let decrypted = crypto.decrypt(&encrypted).unwrap();
     assert_eq!(decrypted, test_data);
     
-    println!("✓ Security operations test passed");
+    println!("Security operations test passed");
 }
 
 #[test]
@@ -72,7 +72,7 @@ fn test_telemetry_processing() {
     let _processor = TelemetryProcessor::new();
     
     // Basic processor test
-    println!("✓ Telemetry processor initialized successfully");
+    println!("Telemetry processor initialized successfully");
 }
 
 #[test]
@@ -80,7 +80,7 @@ fn test_space_simulation() {
     let _simulator = SpaceSimulator::new();
     
     // Basic simulation test
-    println!("✓ Space simulator initialized successfully");
+    println!("Space simulator initialized successfully");
 }
 
 #[test]
@@ -108,7 +108,7 @@ fn test_end_to_end_communication_flow() {
     let decrypted_data = crypto.decrypt(&decoded_frame.data).unwrap();
     assert_eq!(decrypted_data, test_data);
     
-    println!("✓ End-to-end communication flow test completed successfully!");
+    println!("End-to-end communication flow test completed successfully");
 }
 
 #[test]
@@ -125,7 +125,7 @@ fn test_error_handling_and_recovery() {
     let decrypt_result = crypto.decrypt(&vec![0xFF; 32]);
     assert!(decrypt_result.is_err());
     
-    println!("✓ Error handling tests completed successfully!");
+    println!("Error handling tests completed successfully");
 }
 
 #[test]
@@ -143,6 +143,6 @@ fn test_performance_basic() {
     let elapsed = start_time.elapsed();
     let frames_per_second = 100.0 / elapsed.as_secs_f64();
     
-    println!("✓ Performance test: {:.2} frames/second", frames_per_second);
+    println!("Performance test: {:.2} frames/second", frames_per_second);
     assert!(frames_per_second > 100.0); // Should handle at least 100 frames per second
 }
