@@ -1,7 +1,7 @@
 // Protocol layer modules for RustSat-ESA communication stack
 
-pub mod spacecan;
 pub mod network;
+pub mod spacecan;
 
-pub use spacecan::{SpaceCANFrame, SpaceCANAdapter, FramePriority, PowerMode};
-pub use network::{MeshNetwork, RoutingTable, NetworkNode};
+pub use network::{MeshNetwork, NetworkNode};
+pub use spacecan::{FramePriority, PowerMode, SpaceCANAdapter, SpaceCANFrame};

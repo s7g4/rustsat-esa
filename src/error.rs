@@ -1,4 +1,4 @@
-#![no_std]
+
 
 use defmt::Format;
 
@@ -16,6 +16,8 @@ pub enum RustSatError {
     TelemetryError,
     /// Core initialization or state machine error
     SystemError,
+    /// Configuration validation error
+    ConfigError,
 }
 
-// In a true #![no_std] environment without alloc, we do not implement std::error::Error.
+// In a true  environment without alloc, we do not implement std::error::Error.
