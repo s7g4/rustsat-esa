@@ -5,6 +5,21 @@ Every entry must contain: Goal, Work Completed, Problems Encountered, Root Cause
 
 ---
 
+### [2026-06-03] - Formal Verification via Typestate Pattern
+
+**Goal:** Mathematically guarantee at compile-time that a satellite cannot transmit mission-critical maneuvering or timing telemetry unless its clock is completely synchronized with the rest of the swarm.
+**Work Completed:** 
+- Drafted the Formal Verification specification.
+- Transitioning Swarm logic to a Typestate orchestrator (`SwarmOrchestrator<State>`).
+**Problems Encountered:** Runtime checks (`if !is_synchronized { return Err(...) }`) are susceptible to human error if a developer forgets to write the check. 
+**Root Cause Analysis:** Dynamic runtime validation is insufficient for autonomous orbital mechanics. State machines should be proven by the compiler.
+**Fix:** Designed a `SwarmOrchestrator` utilizing zero-sized type state tags (`Unsynchronized`, `Syncing`, `Synchronized`). Restricted API methods (like `execute_maneuver`) are strictly bound via `impl SwarmOrchestrator<Synchronized>`, turning logical bugs into hard compile errors.
+**Lessons Learned:** The Rust compiler is the most robust test suite available for embedded systems.
+**Metrics:** 0 runtime overhead. Typestates dissolve completely during compilation.
+**Next Steps:** Implement the Swarm sync protocol in `src/protocol/swarm.rs`.
+
+---
+
 ### [2026-06-03] - Zero-Copy Mesh Routing Architecture
 
 ### Architecture Changes
@@ -21,7 +36,7 @@ Embedded architectures lack Memory Management Units (MMU) capable of absorbing m
 
 ---
 
-### [2026-06-03] Phase 1 Initialization: Lean Documentation & Architecture Strategy
+### [2026-06-03] Initialization: Lean Documentation & Architecture Strategy
 **Goal:** Establish the repository baseline before initiating the `#![no_std]` core overhaul.
 **Work Completed:** Initialized `README.md`, `DEVLOG.md`, `.github/workflows/ci.yml`, and `docs/adr/0001-static-composition.md`.
 **Problems Encountered:** Waterfall-style documentation mapping generated unnecessary overhead for an agile embedded project.

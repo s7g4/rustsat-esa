@@ -14,6 +14,7 @@ use cortex_m_semihosting::{debug, hprintln};
 use rustsat_esa::protocol::fec::Hamming84;
 use rustsat_esa::protocol::network::{MeshNetwork, RouteAction, RoutingEntry};
 use rustsat_esa::protocol::spacecan::{FramePriority, SpaceCANFrame};
+use rustsat_esa::protocol::swarm::{SwarmOrchestrator, Synchronized, Syncing, Unsynchronized};
 
 #[entry]
 fn main() -> ! {
@@ -24,6 +25,7 @@ fn main() -> ! {
     passed &= test_fec_clean_encode_decode();
     passed &= test_fec_single_bit_flip_recovery();
     passed &= test_zero_copy_routing();
+    passed &= test_formal_typestate_sync();
 
     if passed {
         hprintln!("SUCCESS: All integration tests passed!");
@@ -116,4 +118,42 @@ fn test_zero_copy_routing() -> bool {
     }
 
     false
+}
+
+fn test_formal_typestate_sync() -> bool {
+    hprintln!("Running test_formal_typestate_sync...");
+
+    // 1. Boot up satellite: It starts as Unsynchronized
+    let node_unsync: SwarmOrchestrator<Unsynchronized> = SwarmOrchestrator::new(42);
+    node_unsync.send_telemetry(); // Allowed
+
+    // node_unsync.execute_maneuver(0.0, 0.0, 0.0); // UNCOMMENTING THIS WILL CAUSE A COMPILE ERROR
+
+    // 2. Transition to Syncing
+    let mut node_syncing: SwarmOrchestrator<Syncing> = node_unsync.begin_sync();
+
+    // Simulate receiving 3 sync beacons
+    node_syncing = match node_syncing.process_sync_beacon() {
+        Err(syncing) => syncing,
+        Ok(_) => return false,
+    };
+
+    node_syncing = match node_syncing.process_sync_beacon() {
+        Err(syncing) => syncing,
+        Ok(_) => return false,
+    };
+
+    // 3. Final beacon transitions it to Synchronized
+    let node_synced: SwarmOrchestrator<Synchronized> = match node_syncing.process_sync_beacon() {
+        Ok(synced) => synced,
+        Err(_) => return false,
+    };
+
+    // 4. Mission Critical Method is now unlocked and mathematically proven safe to call!
+    let _ = node_synced.execute_maneuver(1.2, 0.5, 0.0);
+
+    // 5. Demonstrate safe demotion
+    let _node_demoted: SwarmOrchestrator<Unsynchronized> = node_synced.demote();
+
+    true
 }
