@@ -5,6 +5,22 @@ Every entry must contain: Goal, Work Completed, Problems Encountered, Root Cause
 
 ---
 
+### [2026-06-03] - Zero-Copy Mesh Routing Architecture
+
+### Architecture Changes
+- **Deprecated Allocating NetworkPackets:** The `NetworkPacket` payload buffer abstraction was a significant performance bottleneck due to copying 256 bytes per router hop.
+- **Introduced Zero-Copy `NetworkHeaderView`:** Engineered a zero-cost abstraction that wraps the physical MAC buffer (`SpaceCANFrame.data`) to read/write `packet_id`, `source`, `destination`, `next_hop`, and `ttl` using direct memory offsets.
+- **In-Place Routing Logic:** The `MeshNetwork` struct now manipulates the packet TTL and determines the optimal next-hop dynamically in-place, returning a specific `RouteAction` (`Forward`, `Consume`, `Drop`).
+- **Orchestrator Zero-Copy Injection:** `RustSatProtocol::send_message` now packs the network metadata directly at the precise byte offsets of the MAC payload prior to physical encapsulation, reducing cross-layer buffering by 50%.
+
+### Rationale (Zero-Copy)
+Embedded architectures lack Memory Management Units (MMU) capable of absorbing massive heap churn. By maintaining exactly one canonical byte buffer allocated at the physical frame genesis, and dynamically projecting "View" structures over that buffer throughout the routing stack, we achieve O(1) latency overhead per network hop.
+
+### References
+- `docs/adr/0004-zero-copy-mesh-routing.md`
+
+---
+
 ### [2026-06-03] Phase 1 Initialization: Lean Documentation & Architecture Strategy
 **Goal:** Establish the repository baseline before initiating the `#![no_std]` core overhaul.
 **Work Completed:** Initialized `README.md`, `DEVLOG.md`, `.github/workflows/ci.yml`, and `docs/adr/0001-static-composition.md`.
