@@ -1,4 +1,4 @@
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 #![deny(unsafe_code)]
 
 pub mod config;
