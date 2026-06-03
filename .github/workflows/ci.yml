@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: thumbv7em-none-eabihf
+        components: clippy, rustfmt
+        
+    - name: Check Formatting
+      run: cargo fmt --all -- --check
+      
+    - name: Build Core (no_std target)
+      run: cargo check --target thumbv7em-none-eabihf --no-default-features
+      
+    - name: Clippy (no_std target)
+      run: cargo clippy --target thumbv7em-none-eabihf --no-default-features -- -D warnings
+      
+  test-host:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      
+    - name: Run Unit & Property Tests
+      run: cargo test

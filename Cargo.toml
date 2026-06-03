@@ -44,7 +44,8 @@ plotters = "0.3"
 warp = "0.3"
 futures = "0.3"
 lazy_static = "1.4"
-
+heapless = "0.8"
+defmt = "0.3"
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 proptest = "1.0"
