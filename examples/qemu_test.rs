@@ -90,7 +90,7 @@ fn test_zero_copy_routing() -> bool {
         0xAA, 0xBB, // Data
     ]);
 
-    let mut frame = SpaceCANFrame::new(1, payload, FramePriority::Normal, 0, 0);
+    let mut frame = SpaceCANFrame::new(1, payload, FramePriority::Normal, 0, 0).unwrap();
 
     // We are Node 10 routing a packet to Node 42
     if let Ok(action) = network.route_in_place(10, &mut frame) {

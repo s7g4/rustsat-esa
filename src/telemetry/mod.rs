@@ -1,8 +1,10 @@
+#![allow(missing_docs)]
 use crate::error::RustSatError;
-use defmt::{debug, error, info, warn, Format};
+
 use heapless::{FnvIndexMap, Vec};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Format)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum TelemetryType {
     SystemHealth,
     PowerStatus,
@@ -13,7 +15,8 @@ pub enum TelemetryType {
     Attitude,
 }
 
-#[derive(Debug, Clone, Format)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct TelemetryData {
     pub timestamp_ticks: u64,
     pub source_node: u32,
@@ -23,7 +26,8 @@ pub struct TelemetryData {
     pub sequence_number: u64,
 }
 
-#[derive(Debug, Clone, Format)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum TelemetryValue {
     Float(f32),
     Integer(i32),
@@ -32,6 +36,7 @@ pub enum TelemetryValue {
 }
 
 #[derive(Debug, Clone)]
+
 pub struct TelemetryBuffer {
     pub packet_id: u32,
     pub source_node: u32,
@@ -40,7 +45,8 @@ pub struct TelemetryBuffer {
     pub priority: u8,
 }
 
-#[derive(Debug, Clone, Format)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct AlertThreshold {
     pub min_value: Option<f32>,
     pub max_value: Option<f32>,
@@ -48,60 +54,73 @@ pub struct AlertThreshold {
 }
 
 pub struct TelemetryProcessor {
-    telemetry_buffer: Vec<TelemetryData, 64>,
+    telemetry_buffer: heapless::Deque<TelemetryData, 64>,
     alert_thresholds: FnvIndexMap<TelemetryType, AlertThreshold, 8>,
     pub alerts_generated: u32,
+    pub packet_sequence: u32,
 }
 
 impl TelemetryProcessor {
     pub fn new() -> Self {
         Self {
-            telemetry_buffer: Vec::new(),
+            telemetry_buffer: heapless::Deque::new(),
             alert_thresholds: FnvIndexMap::new(),
             alerts_generated: 0,
+            packet_sequence: 0,
         }
     }
 
     pub fn initialize(&mut self) -> Result<(), RustSatError> {
-        info!("Initializing telemetry processor");
+        #[cfg(feature = "defmt")]
+        defmt::info!("Initializing telemetry processor");
         self.setup_default_thresholds();
         Ok(())
     }
 
     fn setup_default_thresholds(&mut self) {
-        let _ = self.alert_thresholds.insert(
-            TelemetryType::PowerStatus,
-            AlertThreshold {
-                min_value: Some(20.0),
-                max_value: None,
-                rate_of_change_limit: Some(-5.0),
-            },
-        );
+        self.alert_thresholds
+            .insert(
+                TelemetryType::PowerStatus,
+                AlertThreshold {
+                    min_value: Some(20.0),
+                    max_value: None,
+                    rate_of_change_limit: Some(-5.0),
+                },
+            )
+            .expect("infallible: static map size");
 
-        let _ = self.alert_thresholds.insert(
-            TelemetryType::Temperature,
-            AlertThreshold {
-                min_value: Some(-40.0),
-                max_value: Some(85.0),
-                rate_of_change_limit: Some(10.0),
-            },
-        );
+        self.alert_thresholds
+            .insert(
+                TelemetryType::Temperature,
+                AlertThreshold {
+                    min_value: Some(-40.0),
+                    max_value: Some(85.0),
+                    rate_of_change_limit: Some(10.0),
+                },
+            )
+            .expect("infallible: static map size");
     }
 
     pub fn process_telemetry(&mut self, data: TelemetryData) -> Result<(), RustSatError> {
-        debug!("Processing telemetry data");
+        #[cfg(feature = "defmt")]
+        defmt::debug!("Processing telemetry data");
 
         if data.quality < 0.5 {
-            warn!("Low quality telemetry data received");
+            #[cfg(feature = "defmt")]
+            defmt::warn!("Low quality telemetry data received");
         }
 
         self.check_alerts(&data)?;
 
         if self.telemetry_buffer.is_full() {
-            // simple ring buffer logic
-            self.telemetry_buffer.remove(0);
+            // O(1) ring buffer logic via Deque
+            self.telemetry_buffer
+                .pop_front()
+                .expect("infallible: buffer is full");
         }
-        let _ = self.telemetry_buffer.push(data);
+        self.telemetry_buffer
+            .push_back(data)
+            .expect("infallible: space was just made");
 
         Ok(())
     }
@@ -129,13 +148,17 @@ impl TelemetryProcessor {
             }
 
             if alert_triggered {
-                error!("Telemetry alert triggered!");
+                #[cfg(feature = "defmt")]
+                defmt::error!("Telemetry alert triggered!");
                 self.alerts_generated += 1;
             }
         }
         Ok(())
     }
 
+    /// Creates a telemetry packet from the current buffer.
+    /// Note: This takes `&mut self` because it increments the internal packet sequence counter,
+    /// even though the buffer read operation itself is immutable.
     pub fn create_telemetry_packet(
         &mut self,
         node_id: u32,
@@ -144,7 +167,9 @@ impl TelemetryProcessor {
 
         for data in self.telemetry_buffer.iter() {
             if data.source_node == node_id && !data_points.is_full() {
-                let _ = data_points.push(data.clone());
+                data_points
+                    .push(data.clone())
+                    .expect("infallible: guarded by !is_full");
             }
         }
 
@@ -152,8 +177,10 @@ impl TelemetryProcessor {
             return Err(RustSatError::TelemetryError);
         }
 
+        self.packet_sequence = self.packet_sequence.wrapping_add(1);
+
         Ok(TelemetryBuffer {
-            packet_id: 1234, // Mock random
+            packet_id: self.packet_sequence,
             source_node: node_id,
             timestamp_ticks: 0,
             data_points,
@@ -161,12 +188,14 @@ impl TelemetryProcessor {
         })
     }
 
-    pub fn log_transmission(&mut self, destination: u32, _bytes_sent: usize) {
-        debug!("Transmission to node {}", destination);
+    pub fn log_transmission(&mut self, _destination: u32, _bytes_sent: usize) {
+        #[cfg(feature = "defmt")]
+        defmt::debug!("Transmission to node {}", _destination);
     }
 
     pub fn log_reception(&mut self, _bytes_received: usize) {
-        debug!("Reception logged");
+        #[cfg(feature = "defmt")]
+        defmt::debug!("Reception logged");
     }
 }
 

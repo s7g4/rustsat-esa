@@ -1,1 +1,32 @@
 /target
+Cargo.lock
+
+# IDEs
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.elf
+*.bin
+*.hex
+*.map
+*.log
+
+# Swap and backup files
+*~
+*.swp
+*.swo

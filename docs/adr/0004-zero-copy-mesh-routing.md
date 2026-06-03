@@ -1,5 +1,8 @@
 # ADR 0004: Zero-Copy Mesh Routing Architecture
 
+**Date:** 2026-06-03
+**Status:** Accepted
+
 ## Context
 The Satellite Mesh Network involves dynamic routing of packets between CubeSats, Relays, and Ground Stations. Initially, `network.rs` utilized a `NetworkPacket` structure that maintained its own `heapless::Vec<u8, 256>` payload array.
 Whenever the physical layer (SpaceCAN) received a frame destined for another node, the networking layer was required to copy the 256 bytes out of the MAC frame, into the `NetworkPacket`, process the TTL and hop data, and then copy it back into a new MAC frame for re-transmission. This resulted in dual-allocation and severe memory bandwidth taxation on a 48MHz Cortex-M4 core.

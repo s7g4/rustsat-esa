@@ -12,31 +12,46 @@ env:
 jobs:
   build-and-lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
     - uses: actions/checkout@v4
     
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
       with:
-        targets: thumbv7em-none-eabihf
+        targets: thumbv7m-none-eabi
         components: clippy, rustfmt
         
     - name: Check Formatting
-      run: cargo fmt --all -- --check
+      run: cargo fmt --all --check
       
     - name: Build Core (no_std target)
-      run: cargo check --target thumbv7em-none-eabihf --no-default-features
+      run: cargo check --target thumbv7m-none-eabi --no-default-features
       
     - name: Clippy (no_std target)
-      run: cargo clippy --target thumbv7em-none-eabihf --no-default-features -- -D warnings
-    # Note: Host-side testing (cargo test) is disabled natively.
-    # Embedded `#![no_std]` testing requires HIL or QEMU to satisfy `defmt` linkage.
+      run: cargo clippy --target thumbv7m-none-eabi --no-default-features -- -D warnings
+
+    - name: Install cargo-audit
+      run: cargo install cargo-audit
+
+    - name: Security Audit
+      run: cargo audit
+
+    - name: Build Docs
+      run: cargo doc --no-deps --document-private-items
 
   test-qemu:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
     - uses: actions/checkout@v4
     
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+
     - name: Install QEMU
       run: sudo apt-get update && sudo apt-get install -y qemu-system-arm
       
@@ -47,3 +62,18 @@ jobs:
         
     - name: Run QEMU Integration Tests
       run: cargo run --example qemu_test --target thumbv7m-none-eabi
+
+  msrv:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install MSRV Rust toolchain
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: 1.70.0
+        targets: thumbv7m-none-eabi
+
+    - name: Check MSRV
+      run: cargo check --target thumbv7m-none-eabi --no-default-features

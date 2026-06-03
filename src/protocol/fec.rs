@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::error::RustSatError;
 use heapless::Vec;
 
@@ -105,7 +103,7 @@ impl Hamming84 {
             if encoded.push(Self::encode_nibble(high_nibble)).is_err()
                 || encoded.push(Self::encode_nibble(low_nibble)).is_err()
             {
-                return Err(RustSatError::SystemError); // Capacity exceeded
+                return Err(RustSatError::SystemError("Capacity exceeded"));
             }
         }
         Ok(encoded)
@@ -125,9 +123,32 @@ impl Hamming84 {
 
             let original_byte = (high_nibble << 4) | low_nibble;
             if decoded.push(original_byte).is_err() {
-                return Err(RustSatError::SystemError);
+                return Err(RustSatError::SystemError("Capacity exceeded"));
             }
         }
         Ok(decoded)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_fec_roundtrip() {
+        let data = [0xAB, 0xCD, 0xEF, 0x42];
+        let encoded: Vec<u8, 64> = Hamming84::encode(&data).unwrap();
+        let decoded: Vec<u8, 64> = Hamming84::decode(&encoded).unwrap();
+        assert_eq!(data, decoded.as_slice());
+    }
+
+    #[test]
+    fn test_single_bit_flip_recovery() {
+        let data = [0x55];
+        let mut encoded: Vec<u8, 64> = Hamming84::encode(&data).unwrap();
+        // Flip one bit
+        encoded[0] ^= 0b0000_1000;
+        let decoded: Vec<u8, 64> = Hamming84::decode(&encoded).unwrap();
+        assert_eq!(data, decoded.as_slice());
     }
 }
