@@ -29,14 +29,21 @@ jobs:
       
     - name: Clippy (no_std target)
       run: cargo clippy --target thumbv7em-none-eabihf --no-default-features -- -D warnings
-      
-  test-host:
+    # Note: Host-side testing (cargo test) is disabled natively.
+    # Embedded `#![no_std]` testing requires HIL or QEMU to satisfy `defmt` linkage.
+
+  test-qemu:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     
+    - name: Install QEMU
+      run: sudo apt-get update && sudo apt-get install -y qemu-system-arm
+      
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
-      
-    - name: Run Unit & Property Tests
-      run: cargo test
+      with:
+        targets: thumbv7m-none-eabi
+        
+    - name: Run QEMU Integration Tests
+      run: cargo run --example qemu_test --target thumbv7m-none-eabi

@@ -1,5 +1,3 @@
-
-
 use defmt::Format;
 
 /// Core domain errors for the RustSat protocol stack.
@@ -14,10 +12,12 @@ pub enum RustSatError {
     SecurityError,
     /// Telemetry packet parsing or validation failure
     TelemetryError,
+    /// Data integrity or checksum failure
+    DataCorruption,
+    /// Invalid packet format or header structure
+    InvalidFormat,
     /// Core initialization or state machine error
     SystemError,
     /// Configuration validation error
     ConfigError,
 }
-
-// In a true  environment without alloc, we do not implement std::error::Error.

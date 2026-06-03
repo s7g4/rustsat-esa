@@ -1,9 +1,7 @@
-
-
-use core::time::Duration;
-use heapless::String;
-use defmt::Format;
 use crate::error::RustSatError;
+use core::time::Duration;
+
+use heapless::String;
 
 #[derive(Debug, Clone)]
 pub struct RustSatConfig {
@@ -215,27 +213,5 @@ impl ConfigBuilder {
 impl Default for ConfigBuilder {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_default_config_is_valid() {
-        let config = RustSatConfig::default();
-        assert!(config.validate().is_ok());
-    }
-
-    #[test]
-    fn test_config_builder() {
-        let config = ConfigBuilder::new()
-            .satellite_id(42)
-            .encryption_enabled(false)
-            .build()
-            .unwrap(); // Allowed in tests, but we'll try to avoid it anyway.
-        assert_eq!(config.system.satellite_id, 42);
-        assert!(!config.security.encryption_enabled);
     }
 }

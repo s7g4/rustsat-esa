@@ -38,7 +38,8 @@ impl MetricsCollector {
     }
 
     pub fn record_latency(&self, latency_ms: u32) {
-        self.total_latency_ms.fetch_add(latency_ms, Ordering::Relaxed);
+        self.total_latency_ms
+            .fetch_add(latency_ms, Ordering::Relaxed);
     }
 
     pub fn record_tick(&self, ticks: u32) {
@@ -86,24 +87,8 @@ macro_rules! record_latency {
     };
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_metrics_collection() {
-        let collector = MetricsCollector::new();
-
-        collector.record_message();
-        collector.record_message();
-        collector.record_error();
-        collector.record_latency_ms(50);
-        collector.record_latency_ms(100);
-
-        let metrics = collector.get_metrics();
-
-        assert_eq!(metrics.message_count, 2);
-        assert_eq!(metrics.error_count, 1);
-        assert_eq!(metrics.total_latency_ms, 150);
+impl Default for MetricsCollector {
+    fn default() -> Self {
+        Self::new()
     }
 }

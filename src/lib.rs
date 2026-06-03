@@ -1,16 +1,16 @@
 #![no_std]
 
-pub mod error;
 pub mod config;
 pub mod cubesat;
+pub mod error;
 pub mod metrics;
 pub mod protocol;
+pub mod rtos_bindings;
 pub mod telemetry;
 
-use protocol::network::MeshNetwork;
-use protocol::spacecan::SpaceCANFrame;
 use error::RustSatError;
 use heapless::Vec;
+use protocol::network::MeshNetwork;
 
 /// Main RustSat protocol stack integrating all core embedded layers
 pub struct RustSatProtocol {
@@ -59,7 +59,7 @@ impl RustSatProtocol {
     pub fn receive_message(&mut self) -> Result<Option<Vec<u8, 256>>, RustSatError> {
         if let Some(raw_data) = self.physical_layer.receive()? {
             self.telemetry.log_reception(raw_data.len());
-            
+
             let mut result = Vec::new();
             if result.extend_from_slice(&raw_data).is_err() {
                 return Err(RustSatError::SystemError);
@@ -68,5 +68,11 @@ impl RustSatProtocol {
         } else {
             Ok(None)
         }
+    }
+}
+
+impl Default for RustSatProtocol {
+    fn default() -> Self {
+        Self::new()
     }
 }

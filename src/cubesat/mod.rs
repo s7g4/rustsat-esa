@@ -1,7 +1,5 @@
-
-
-use heapless::Vec;
 use defmt::Format;
+use heapless::Vec;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Format)]
 pub enum FrameType {

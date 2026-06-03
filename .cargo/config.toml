@@ -1,0 +1,10 @@
+[target.thumbv7m-none-eabi]
+# QEMU runner:
+# -cpu cortex-m3 : Required for lm3s6965evb machine
+# -machine lm3s6965evb : A standard Cortex-M3 emulator target
+# -nographic : Disable window, print to console
+# -semihosting-config : Enable semihosting to allow exit codes and panic printing
+runner = "qemu-system-arm -cpu cortex-m3 -machine lm3s6965evb -nographic -semihosting-config enable=on,target=native -kernel"
+
+[build]
+target = "thumbv7em-none-eabihf"

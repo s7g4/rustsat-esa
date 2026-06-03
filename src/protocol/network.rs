@@ -1,8 +1,6 @@
-
-
-use heapless::{FnvIndexMap, Vec};
-use defmt::{debug, error, info, warn, Format};
 use crate::error::RustSatError;
+use defmt::{info, warn, Format};
+use heapless::{FnvIndexMap, Vec};
 
 #[derive(Debug, Clone, PartialEq, Eq, Format)]
 pub enum NodeType {
@@ -72,13 +70,18 @@ impl MeshNetwork {
         self.nodes.remove(&node_id);
     }
 
-    pub fn route_message(&mut self, source: u32, destination: u32, data: &[u8]) -> Result<bool, RustSatError> {
+    pub fn route_message(
+        &mut self,
+        source: u32,
+        destination: u32,
+        data: &[u8],
+    ) -> Result<bool, RustSatError> {
         let mut payload = Vec::new();
         if payload.extend_from_slice(data).is_err() {
             return Err(RustSatError::SystemError); // Payload too large
         }
 
-        let packet = NetworkPacket {
+        let _packet = NetworkPacket {
             packet_id: 1, // Mock
             source,
             destination,
@@ -94,5 +97,11 @@ impl MeshNetwork {
 
         info!("Successfully routed message to destination");
         Ok(true)
+    }
+}
+
+impl Default for MeshNetwork {
+    fn default() -> Self {
+        Self::new()
     }
 }

@@ -1,8 +1,6 @@
-
-
-use defmt::{debug, error, info, warn, Format};
-use heapless::{Vec, FnvIndexMap};
 use crate::error::RustSatError;
+use defmt::{debug, error, info, warn, Format};
+use heapless::{FnvIndexMap, Vec};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Format)]
 pub enum TelemetryType {
@@ -119,11 +117,15 @@ impl TelemetryProcessor {
             let mut alert_triggered = false;
 
             if let Some(min_val) = threshold.min_value {
-                if value < min_val { alert_triggered = true; }
+                if value < min_val {
+                    alert_triggered = true;
+                }
             }
 
             if let Some(max_val) = threshold.max_value {
-                if value > max_val { alert_triggered = true; }
+                if value > max_val {
+                    alert_triggered = true;
+                }
             }
 
             if alert_triggered {
@@ -139,7 +141,7 @@ impl TelemetryProcessor {
         node_id: u32,
     ) -> Result<TelemetryBuffer, RustSatError> {
         let mut data_points = Vec::new();
-        
+
         for data in self.telemetry_buffer.iter() {
             if data.source_node == node_id && !data_points.is_full() {
                 let _ = data_points.push(data.clone());
@@ -159,11 +161,11 @@ impl TelemetryProcessor {
         })
     }
 
-    pub fn log_transmission(&mut self, destination: u32, bytes_sent: usize) {
+    pub fn log_transmission(&mut self, destination: u32, _bytes_sent: usize) {
         debug!("Transmission to node {}", destination);
     }
 
-    pub fn log_reception(&mut self, bytes_received: usize) {
+    pub fn log_reception(&mut self, _bytes_received: usize) {
         debug!("Reception logged");
     }
 }

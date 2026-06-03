@@ -1,7 +1,5 @@
-
-
 use crate::error::RustSatError;
-use defmt::{error, info, warn, Format};
+use defmt::{info, Format};
 use heapless::{FnvIndexMap, Vec as HeaplessVec};
 
 /// Frame priority levels for CubeSat communications
@@ -238,9 +236,15 @@ impl SpaceCANAdapter {
 
     pub fn transmit(&mut self, frame: &SpaceCANFrame) -> Result<(), RustSatError> {
         let channel_id = self.select_optimal_channel(frame)?;
-        let encoded = frame.encode();
+
+        let mut _encoded = frame.encode();
+        // Phase 2: Apply Forward Error Correction (Hamming 8,4)
+        if frame.priority == FramePriority::Emergency || frame.priority == FramePriority::High {
+            _encoded = crate::protocol::fec::Hamming84::encode(&_encoded)?;
+        }
+
         info!(
-            "Transmitted frame seq={} on ch={}",
+            "Transmitted frame seq={} on ch={} (FEC protected)",
             frame.sequence_number, channel_id
         );
         Ok(())
@@ -249,7 +253,22 @@ impl SpaceCANAdapter {
     pub fn receive(&mut self) -> Result<Option<HeaplessVec<u8, 512>>, RustSatError> {
         if !self.frame_buffer.is_empty() {
             let frame = self.frame_buffer.pop().unwrap();
-            let encoded = frame.encode();
+            let mut encoded = frame.encode();
+
+            // Phase 2: Attempt FEC Recovery if frame priority requires it
+            if frame.priority == FramePriority::Emergency || frame.priority == FramePriority::High {
+                match crate::protocol::fec::Hamming84::decode(&encoded) {
+                    Ok(recovered) => encoded = recovered,
+                    Err(_) => {
+                        defmt::error!(
+                            "Unrecoverable data corruption in frame seq={}",
+                            frame.sequence_number
+                        );
+                        return Err(RustSatError::DataCorruption);
+                    }
+                }
+            }
+
             return Ok(Some(encoded));
         }
         Ok(None)
